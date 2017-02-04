@@ -1,8 +1,10 @@
 package endingloop.es.simpletodo;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.util.Log;
@@ -16,6 +18,9 @@ import java.util.ArrayList;
 
 import endingloop.es.simpletodo.model.Listas;
 
+import static endingloop.es.simpletodo.R.color.background_material_light;
+import static endingloop.es.simpletodo.R.id.check;
+
 /**
  * Created by xacy on 04/02/2017.
  */
@@ -24,8 +29,9 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.ViewHolder>  {
     private ArrayList<Listas> mDataset;
     private Context mContext;
     private TodoAdapterCallback mAdapterCallback;
+    private boolean editMenuVisible=false;
 
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener{
         // each data item is just a string in this case
         public TextView description;
         public ImageView tick;
@@ -33,32 +39,73 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.ViewHolder>  {
         public ViewHolder(View v) {
             super(v);
             description = (TextView) v.findViewById(R.id.eachItem);
-            tick = (ImageView) v.findViewById(R.id.check);
+            tick = (ImageView) v.findViewById(check);
             v.setOnClickListener(this);
+            v.setOnLongClickListener(this);
         }
         @Override
         public void onClick(View v){
             //Snackbar.make(v, "Element click: ", Snackbar.LENGTH_SHORT).setAction("Action",null).show();
             Log.i("Context: ","Valor context: "+mContext);
-            try {
-                mAdapterCallback.onItemClickCallback();
-            } catch (ClassCastException exception) {
-                // do something
-            }
-            View check = v.findViewById(R.id.check);
-            TextView eachItemText = (TextView) v.findViewById(R.id.eachItem);
-            if(check.getVisibility()==View.INVISIBLE){
-                check.setVisibility(View.VISIBLE);
-                eachItemText.setPaintFlags(eachItemText.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+            Log.i("Context: ","Visible: "+editMenuVisible);
+            if(editMenuVisible){
+                Log.i("Menu","Esta visible");
+                if(v.isSelected()){
+                    unSelectItem(v);
+                }
+                else{
+                    selectItem(v);
+                }
             }
             else{
-                eachItemText.setPaintFlags(eachItemText.getPaintFlags() & (~ Paint.STRIKE_THRU_TEXT_FLAG));
-                check.setVisibility(View.INVISIBLE);
+                try {
+                    mAdapterCallback.onItemClickCallback();
+                } catch (ClassCastException exception) {
+                    // do something
+                }
+                //View check = v.findViewById(R.id.check);
+                //TextView eachItemText = (TextView) v.findViewById(R.id.eachItem);
+                if(tick.getVisibility()==View.INVISIBLE){
+                    tick.setVisibility(View.VISIBLE);
+                    description.setPaintFlags(description.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+                }
+                else{
+                    description.setPaintFlags(description.getPaintFlags() & (~ Paint.STRIKE_THRU_TEXT_FLAG));
+                    tick.setVisibility(View.INVISIBLE);
+                }
             }
         }
+
+        @Override
+        public boolean onLongClick(View v) {
+            if(!editMenuVisible){
+                mAdapterCallback.onLongItemClickCallback();
+                editMenuVisible=true;
+                selectItem(v);
+
+            }
+            else{
+                Snackbar.make(v, "Long click again", Snackbar.LENGTH_SHORT).setAction("Action",null).show();
+            }
+            return true;
+        }
+        public void selectItem(View v){
+            mAdapterCallback.onItemSelect();
+            v.setBackgroundResource(R.color.colorPrimaryLowAlpha);
+            v.setSelected(true);
+        }
+        public void unSelectItem(View v){
+            mAdapterCallback.onItemUnSelect();
+            v.setBackgroundResource(R.color.backgroundWhite);
+            v.setSelected(false);
+        }
     }
+
     public interface TodoAdapterCallback {
         void onItemClickCallback();
+        void onLongItemClickCallback();
+        void onItemSelect();
+        void onItemUnSelect();
     }
     public void add(Listas item) {
         //mDataset.add(position, item);
@@ -115,5 +162,13 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.ViewHolder>  {
     @Override
     public int getItemCount() {
         return mDataset.size();
+    }
+
+    public boolean isEditMenuVisible() {
+        return editMenuVisible;
+    }
+
+    public void setEditMenuVisible(boolean editMenuVisible) {
+        this.editMenuVisible = editMenuVisible;
     }
 }

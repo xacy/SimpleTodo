@@ -44,15 +44,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private InputMethodManager imm;
     private TodoDataSource datasource;
 
+    private Toolbar toolbar;
     private RecyclerView mRecyclerView;
     private TodoAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
+
+    private int selectedItems=0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
         RelativeLayout relative= (RelativeLayout) findViewById(R.id.content_main);
         mRecyclerView = (RecyclerView) findViewById(R.id.todoItems);
         //imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -114,7 +117,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onItemClickCallback() {
         desactivarMorphBar();
+    }
 
+    @Override
+    public void onLongItemClickCallback() {
+        activarToolbarEdicion();
+    }
+
+    @Override
+    public void onItemSelect() {
+        selectedItems++;
+        TextView number=(TextView)toolbar.findViewById(R.id.action_main_number);
+        number.setText(selectedItems+"");
+
+    }
+
+    @Override
+    public void onItemUnSelect() {
+        selectedItems--;
+        TextView number=(TextView)toolbar.findViewById(R.id.action_main_number);
+        number.setText(selectedItems+"");
+        if(selectedItems==0){
+            desactivarToolbarEdicion();
+            mAdapter.setEditMenuVisible(false);
+        }
     }
 
     @Override
@@ -139,6 +165,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
     public void desactivarMorphBar(){
         morph.hide();
+    }
+    public void activarToolbarEdicion(){
+        toolbar.getMenu().clear();
+        //selectedItems++;
+        toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+        toolbar.findViewById(R.id.action_main_number).setVisibility(View.VISIBLE);
+        ((TextView)toolbar.findViewById(R.id.action_main_number)).setText(selectedItems+"");
+        toolbar.findViewById(R.id.action_main_delete).setVisibility(View.VISIBLE);
+        toolbar.setTitle("Tareas seleccionadas: ");
+    }
+    public void desactivarToolbarEdicion(){
+        toolbar.getMenu().clear();
+        selectedItems=0;
+        toolbar.setNavigationIcon(null);
+        toolbar.findViewById(R.id.action_main_number).setVisibility(View.GONE);
+        ((TextView)toolbar.findViewById(R.id.action_main_number)).setText(selectedItems+"");
+        toolbar.findViewById(R.id.action_main_delete).setVisibility(View.GONE);
+        toolbar.setTitle(R.string.app_name);
     }
     /*
     @Override
@@ -194,6 +238,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
+        }
+        else if(id==android.R.id.home){
+            mAdapter.setEditMenuVisible(false);
         }
 
         return super.onOptionsItemSelected(item);
